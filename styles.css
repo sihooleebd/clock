@@ -35,7 +35,6 @@ body {
   display: grid;
   align-content: center;
   justify-items: center;
-  gap: clamp(10px, 2.2vh, 18px);
   padding: clamp(12px, 2.4vw, 24px);
   animation: reveal 420ms ease-out both;
 }
@@ -46,16 +45,6 @@ body {
   image-rendering: pixelated;
   image-rendering: crisp-edges;
   filter: drop-shadow(0 0 clamp(12px, 2.4vw, 24px) var(--fg-glow));
-}
-
-.period-label {
-  margin: 0;
-  opacity: 0.82;
-  color: var(--label);
-  user-select: none;
-  text-transform: uppercase;
-  font-size: clamp(12px, 2.2vw, 20px);
-  letter-spacing: 0.2em;
 }
 
 @keyframes reveal {
