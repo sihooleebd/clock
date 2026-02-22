@@ -2,6 +2,7 @@
   --bg-top: rgb(3 7 20);
   --bg-bottom: rgb(11 23 53);
   --bg-glow: rgb(38 80 148 / 42%);
+  --bg-glow-soft: rgb(28 60 118 / 22%);
   --fg: rgb(123 188 255);
   --fg-glow: rgb(123 188 255 / 60%);
   --label: rgb(170 211 255);
@@ -25,11 +26,23 @@ body {
   place-items: center;
   font-family: "Lucida Console", Monaco, "Courier New", monospace;
   background:
+    radial-gradient(96vmax 62vmax at 12% 110%, var(--bg-glow-soft) 0%, transparent 66%),
     radial-gradient(115vmax 70vmax at 50% -20%, var(--bg-glow) 0%, transparent 62%),
     linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
 }
 
+#weather-layer {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+
 .app {
+  position: relative;
+  z-index: 2;
   width: 100%;
   height: 100%;
   display: grid;
@@ -47,6 +60,112 @@ body {
   filter: drop-shadow(0 0 clamp(12px, 2.4vw, 24px) var(--fg-glow));
 }
 
+.period-label {
+  margin: 0;
+  opacity: 0.82;
+  color: var(--label);
+  user-select: none;
+  text-transform: uppercase;
+  font-size: clamp(12px, 2vw, 19px);
+  letter-spacing: 0.12em;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.38rem;
+}
+
+.status-line {
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 1.4vw, 14px);
+}
+
+.period-date {
+  color: var(--label);
+}
+
+.period-divider {
+  opacity: 0.64;
+}
+
+.period-button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--label);
+  font: inherit;
+  font-size: inherit;
+  letter-spacing: inherit;
+  text-transform: uppercase;
+  padding: 0;
+  cursor: pointer;
+  transition: color 130ms ease, opacity 130ms ease;
+}
+
+.period-button:hover {
+  color: var(--fg);
+}
+
+.period-button:focus-visible {
+  outline: 2px solid var(--fg);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.period-button[aria-pressed="true"] {
+  color: var(--fg);
+}
+
+.theme-lock {
+  appearance: none;
+  border: 1px solid rgb(255 255 255 / 26%);
+  background: rgb(6 12 30 / 44%);
+  color: var(--label);
+  border-radius: 999px;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition:
+    border-color 130ms ease,
+    color 130ms ease,
+    background-color 130ms ease,
+    transform 130ms ease;
+}
+
+.theme-lock:hover {
+  color: var(--fg);
+  border-color: var(--fg);
+  transform: translateY(-1px);
+}
+
+.theme-lock:focus-visible {
+  outline: 2px solid var(--fg);
+  outline-offset: 2px;
+}
+
+.theme-lock .lock-icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+.theme-lock .lock-icon-locked {
+  display: none;
+}
+
+.theme-lock[data-locked="true"] .lock-icon-locked {
+  display: block;
+}
+
+.theme-lock[data-locked="true"] .lock-icon-unlocked {
+  display: none;
+}
+
 @keyframes reveal {
   0% {
     opacity: 0;
@@ -55,5 +174,16 @@ body {
   100% {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app {
+    animation: none;
+  }
+
+  .period-button,
+  .theme-lock {
+    transition: none;
   }
 }

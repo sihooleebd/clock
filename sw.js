@@ -1,4 +1,4 @@
-const CACHE_NAME = "pixel-clock-v1";
+const CACHE_NAME = "pixel-clock-v6";
 const OFFLINE_URL = "index.html";
 const PRECACHE_URLS = [
   "./",
@@ -10,32 +10,58 @@ const PRECACHE_URLS = [
 ];
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches
-      .open(CACHE_NAME)
-      .then((cache) => cache.addAll(PRECACHE_URLS))
-      .then(() => self.skipWaiting())
-  );
+  event.waitUntil(precache());
 });
 
 self.addEventListener("activate", (event) => {
-  event.waitUntil(
-    caches
-      .keys()
-      .then((keys) =>
-        Promise.all(
-          keys
-            .filter((cacheKey) => cacheKey !== CACHE_NAME)
-            .map((cacheKey) => caches.delete(cacheKey))
-        )
-      )
-      .then(() => self.clients.claim())
-  );
+  event.waitUntil(activateServiceWorker());
 });
+
+async function precache() {
+  const cache = await caches.open(CACHE_NAME);
+  await cache.addAll(PRECACHE_URLS);
+  await self.skipWaiting();
+}
+
+async function activateServiceWorker() {
+  const keys = await caches.keys();
+  await Promise.all(
+    keys
+      .filter((cacheKey) => cacheKey !== CACHE_NAME)
+      .map((cacheKey) => caches.delete(cacheKey))
+  );
+  await self.clients.claim();
+}
+
+async function cacheFirst(request) {
+  const cachedResponse = await caches.match(request);
+  if (cachedResponse) {
+    return cachedResponse;
+  }
+
+  const networkResponse = await fetch(request);
+  if (networkResponse && networkResponse.ok) {
+    const cache = await caches.open(CACHE_NAME);
+    await cache.put(request, networkResponse.clone());
+  }
+  return networkResponse;
+}
+
+async function networkFirstNavigation(request) {
+  try {
+    const networkResponse = await fetch(request);
+    if (networkResponse && networkResponse.ok) {
+      const cache = await caches.open(CACHE_NAME);
+      await cache.put(request, networkResponse.clone());
+    }
+    return networkResponse;
+  } catch {
+    return (await caches.match(request)) || (await caches.match(OFFLINE_URL));
+  }
+}
 
 self.addEventListener("fetch", (event) => {
   const { request } = event;
-
   if (request.method !== "GET") {
     return;
   }
@@ -46,25 +72,11 @@ self.addEventListener("fetch", (event) => {
   }
 
   if (request.mode === "navigate") {
-    event.respondWith(
-      fetch(request).catch(() => caches.match(OFFLINE_URL))
-    );
+    event.respondWith(networkFirstNavigation(request));
     return;
   }
 
   event.respondWith(
-    caches.match(request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-
-      return fetch(request).then((networkResponse) => {
-        if (networkResponse && networkResponse.status === 200) {
-          const responseCopy = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, responseCopy));
-        }
-        return networkResponse;
-      });
-    })
+    cacheFirst(request).catch(async () => caches.match(request))
   );
 });
