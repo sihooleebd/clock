@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta id="theme-color-meta" name="theme-color" content="#070b18" />
+    <meta
+      name="description"
+      content="Large 24-hour pixel clock with colors that shift through the day."
+    />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icons/icon.svg" />
+    <link rel="stylesheet" href="styles.css" />
+    <title>Pixel Clock</title>
+  </head>
+  <body>
+    <main class="app">
+      <canvas
+        id="clock"
+        role="img"
+        aria-label="Current time in 24 hour format"
+      ></canvas>
+      <p id="period-label" class="period-label" aria-live="off"></p>
+    </main>
+    <script src="app.js"></script>
+  </body>
+</html>

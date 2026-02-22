@@ -1,0 +1,18 @@
+{
+  "name": "Pixel Time Display",
+  "short_name": "PixelClock",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#070b18",
+  "theme_color": "#070b18",
+  "description": "Large 24-hour pixel clock with time-of-day color themes.",
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,70 @@
+:root {
+  --bg-top: rgb(3 7 20);
+  --bg-bottom: rgb(11 23 53);
+  --bg-glow: rgb(38 80 148 / 42%);
+  --fg: rgb(123 188 255);
+  --fg-glow: rgb(123 188 255 / 60%);
+  --label: rgb(170 211 255);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  overflow: hidden;
+  color: var(--fg);
+  display: grid;
+  place-items: center;
+  font-family: "Lucida Console", Monaco, "Courier New", monospace;
+  background:
+    radial-gradient(115vmax 70vmax at 50% -20%, var(--bg-glow) 0%, transparent 62%),
+    linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+}
+
+.app {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: clamp(10px, 2.2vh, 18px);
+  padding: clamp(12px, 2.4vw, 24px);
+  animation: reveal 420ms ease-out both;
+}
+
+#clock {
+  max-width: 100%;
+  height: auto;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  filter: drop-shadow(0 0 clamp(12px, 2.4vw, 24px) var(--fg-glow));
+}
+
+.period-label {
+  margin: 0;
+  opacity: 0.82;
+  color: var(--label);
+  user-select: none;
+  text-transform: uppercase;
+  font-size: clamp(12px, 2.2vw, 20px);
+  letter-spacing: 0.2em;
+}
+
+@keyframes reveal {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
