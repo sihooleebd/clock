@@ -1,4 +1,5 @@
 const canvas = document.getElementById("clock");
+const periodLabel = document.getElementById("period-label");
 const themeColorMeta = document.getElementById("theme-color-meta");
 const context = canvas.getContext("2d");
 
@@ -18,7 +19,6 @@ const GLYPHS = {
   "8": ["11111", "10001", "10001", "11111", "10001", "10001", "11111"],
   "9": ["11111", "10001", "10001", "11111", "00001", "00001", "11111"],
   ":": ["0", "1", "0", "0", "1", "0", "0"],
-  "-": ["00000", "00000", "00000", "11111", "00000", "00000", "00000"],
 };
 
 const GLYPH_HEIGHT = 7;
@@ -33,7 +33,7 @@ const DAY_THEMES = [
     bgBottom: [11, 23, 53],
     bgGlow: [38, 80, 148],
     fg: [123, 188, 255],
-    subFg: [170, 211, 255],
+    label: [170, 211, 255],
   },
   {
     name: "Sunrise",
@@ -43,7 +43,7 @@ const DAY_THEMES = [
     bgBottom: [132, 60, 52],
     bgGlow: [228, 130, 88],
     fg: [255, 220, 148],
-    subFg: [255, 210, 180],
+    label: [255, 210, 180],
   },
   {
     name: "Daylight",
@@ -53,7 +53,7 @@ const DAY_THEMES = [
     bgBottom: [130, 201, 238],
     bgGlow: [255, 255, 255],
     fg: [18, 72, 118],
-    subFg: [29, 93, 140],
+    label: [29, 93, 140],
   },
   {
     name: "Sunset",
@@ -63,7 +63,7 @@ const DAY_THEMES = [
     bgBottom: [38, 29, 71],
     bgGlow: [236, 137, 94],
     fg: [255, 181, 124],
-    subFg: [255, 204, 171],
+    label: [255, 204, 171],
   },
   {
     name: "Evening",
@@ -73,7 +73,7 @@ const DAY_THEMES = [
     bgBottom: [14, 28, 64],
     bgGlow: [65, 124, 181],
     fg: [96, 221, 244],
-    subFg: [145, 228, 245],
+    label: [145, 228, 245],
   },
 ];
 
@@ -83,35 +83,33 @@ const SEASONAL_SHIFTS = {
     bgBottom: [-10, 8, 30],
     bgGlow: [-4, 14, 34],
     fg: [-12, 18, 22],
-    subFg: [-8, 16, 20],
+    label: [-8, 16, 20],
   },
   Spring: {
     bgTop: [8, 18, -6],
     bgBottom: [10, 22, -8],
     bgGlow: [16, 24, -3],
     fg: [-6, 14, 0],
-    subFg: [-2, 16, 2],
+    label: [-2, 16, 2],
   },
   Summer: {
     bgTop: [16, 8, -8],
     bgBottom: [18, 10, -10],
     bgGlow: [26, 16, -8],
     fg: [8, 2, -10],
-    subFg: [10, 4, -10],
+    label: [10, 4, -10],
   },
   Autumn: {
     bgTop: [22, -4, -16],
     bgBottom: [20, -6, -14],
     bgGlow: [30, 6, -8],
     fg: [16, -8, -14],
-    subFg: [16, -6, -12],
+    label: [16, -6, -12],
   },
 };
 
 let currentForeground = "rgb(123 188 255)";
-let currentSubForeground = "rgb(170 211 255)";
 let clockText = "";
-let dateText = "";
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
@@ -173,12 +171,12 @@ const resolveDayTheme = (minutes) => {
   const amount = span > 0 ? (minute - current.startMinute) / span : 0;
 
   return {
-    name: current.name,
+    status: current.name,
     bgTop: lerpColor(current.bgTop, next.bgTop, amount),
     bgBottom: lerpColor(current.bgBottom, next.bgBottom, amount),
     bgGlow: lerpColor(current.bgGlow, next.bgGlow, amount),
     fg: lerpColor(current.fg, next.fg, amount),
-    subFg: lerpColor(current.subFg, next.subFg, amount),
+    label: lerpColor(current.label, next.label, amount),
   };
 };
 
@@ -188,33 +186,47 @@ const resolveTheme = (minutes, date) => {
   const shift = SEASONAL_SHIFTS[season];
 
   return {
-    name: `${dayTheme.name} ${season}`,
+    status: dayTheme.status,
+    season,
     bgTop: shiftColor(dayTheme.bgTop, shift.bgTop),
     bgBottom: shiftColor(dayTheme.bgBottom, shift.bgBottom),
     bgGlow: shiftColor(dayTheme.bgGlow, shift.bgGlow),
     fg: shiftColor(dayTheme.fg, shift.fg),
-    subFg: shiftColor(dayTheme.subFg, shift.subFg),
+    label: shiftColor(dayTheme.label, shift.label),
   };
 };
 
-const applyTheme = (theme) => {
+const applyTheme = (theme, dateIso) => {
   const rootStyle = document.documentElement.style;
   rootStyle.setProperty("--bg-top", toRgb(theme.bgTop));
   rootStyle.setProperty("--bg-bottom", toRgb(theme.bgBottom));
   rootStyle.setProperty("--bg-glow", toRgb(theme.bgGlow, 0.45));
   rootStyle.setProperty("--fg", toRgb(theme.fg));
   rootStyle.setProperty("--fg-glow", toRgb(theme.fg, 0.6));
-  rootStyle.setProperty("--label", toRgb(theme.subFg));
+  rootStyle.setProperty("--label", toRgb(theme.label));
 
   currentForeground = toRgb(theme.fg);
-  currentSubForeground = toRgb(theme.subFg);
   themeColorMeta.setAttribute("content", toRgb(theme.bgBottom));
-  canvas.setAttribute("aria-label", `${clockText} on ${dateText}. ${theme.name}`);
+
+  if (periodLabel) {
+    periodLabel.textContent = `${dateIso} \u00B7 ${theme.status}`;
+  }
+
+  canvas.setAttribute(
+    "aria-label",
+    `${clockText} on ${dateIso}. ${theme.status} ${theme.season}`
+  );
 };
 
-const drawPixelText = (text, pixelSize, x, y, color) => {
-  let cursorX = x;
-  context.fillStyle = color;
+const drawText = (text, pixelSize) => {
+  const { width: unitWidth, height: unitHeight } = measureTextUnits(text);
+  const totalWidth = unitWidth * pixelSize;
+  const totalHeight = unitHeight * pixelSize;
+  const offsetX = Math.floor((canvas.clientWidth - totalWidth) / 2);
+  const offsetY = Math.floor((canvas.clientHeight - totalHeight) / 2);
+
+  let cursorX = offsetX;
+  context.fillStyle = currentForeground;
 
   for (let index = 0; index < text.length; index += 1) {
     const glyph = getGlyph(text[index]);
@@ -225,7 +237,7 @@ const drawPixelText = (text, pixelSize, x, y, color) => {
         if (glyph[row][column] === "1") {
           context.fillRect(
             cursorX + column * pixelSize,
-            y + row * pixelSize,
+            offsetY + row * pixelSize,
             pixelSize,
             pixelSize
           );
@@ -240,89 +252,35 @@ const drawPixelText = (text, pixelSize, x, y, color) => {
   }
 };
 
-const pickSizes = (clockMetrics, dateMetrics) => {
-  const maxWidth = Math.floor(window.innerWidth * 0.95);
-  const maxHeight = Math.floor(window.innerHeight * 0.82);
-  const lineGapUnits = 2;
-  const framePaddingUnits = 4;
-
-  for (let mainPixel = 72; mainPixel >= 3; mainPixel -= 1) {
-    const datePixel = Math.max(2, Math.floor(mainPixel * 0.36));
-    const contentWidth = Math.max(
-      clockMetrics.width * mainPixel,
-      dateMetrics.width * datePixel
-    );
-    const contentHeight =
-      clockMetrics.height * mainPixel +
-      lineGapUnits * mainPixel +
-      dateMetrics.height * datePixel;
-    const totalWidth = contentWidth + framePaddingUnits * mainPixel;
-    const totalHeight = contentHeight + framePaddingUnits * mainPixel;
-
-    if (totalWidth <= maxWidth && totalHeight <= maxHeight) {
-      return {
-        mainPixel,
-        datePixel,
-        lineGap: lineGapUnits * mainPixel,
-        canvasWidth: totalWidth,
-        canvasHeight: totalHeight,
-        contentWidth,
-        contentHeight,
-      };
-    }
-  }
-
-  const fallbackMain = 3;
-  const fallbackDate = 2;
-  const contentWidth = Math.max(
-    clockMetrics.width * fallbackMain,
-    dateMetrics.width * fallbackDate
-  );
-  const contentHeight =
-    clockMetrics.height * fallbackMain +
-    2 * fallbackMain +
-    dateMetrics.height * fallbackDate;
-
-  return {
-    mainPixel: fallbackMain,
-    datePixel: fallbackDate,
-    lineGap: 2 * fallbackMain,
-    canvasWidth: contentWidth + 4 * fallbackMain,
-    canvasHeight: contentHeight + 4 * fallbackMain,
-    contentWidth,
-    contentHeight,
-  };
-};
-
 const drawClock = () => {
-  const clockMetrics = measureTextUnits(clockText);
-  const dateMetrics = measureTextUnits(dateText);
-  const sizing = pickSizes(clockMetrics, dateMetrics);
+  const metrics = measureTextUnits(clockText);
+  const maxWidth = Math.floor(window.innerWidth * 0.94);
+  const maxHeight = Math.floor(window.innerHeight * 0.66);
+  const pixelSize = Math.max(
+    3,
+    Math.floor(
+      Math.min(maxWidth / (metrics.width + 4), maxHeight / (metrics.height + 4))
+    )
+  );
+
+  const canvasWidth = (metrics.width + 4) * pixelSize;
+  const canvasHeight = (metrics.height + 4) * pixelSize;
   const dpr = Math.max(1, window.devicePixelRatio || 1);
 
   if (
-    canvas.width !== Math.floor(sizing.canvasWidth * dpr) ||
-    canvas.height !== Math.floor(sizing.canvasHeight * dpr)
+    canvas.width !== Math.floor(canvasWidth * dpr) ||
+    canvas.height !== Math.floor(canvasHeight * dpr)
   ) {
-    canvas.width = Math.floor(sizing.canvasWidth * dpr);
-    canvas.height = Math.floor(sizing.canvasHeight * dpr);
-    canvas.style.width = `${sizing.canvasWidth}px`;
-    canvas.style.height = `${sizing.canvasHeight}px`;
+    canvas.width = Math.floor(canvasWidth * dpr);
+    canvas.height = Math.floor(canvasHeight * dpr);
+    canvas.style.width = `${canvasWidth}px`;
+    canvas.style.height = `${canvasHeight}px`;
     context.setTransform(dpr, 0, 0, dpr, 0, 0);
     context.imageSmoothingEnabled = false;
   }
 
-  context.clearRect(0, 0, sizing.canvasWidth, sizing.canvasHeight);
-
-  const clockWidth = clockMetrics.width * sizing.mainPixel;
-  const dateWidth = dateMetrics.width * sizing.datePixel;
-  const startY = Math.floor((sizing.canvasHeight - sizing.contentHeight) / 2);
-  const clockX = Math.floor((sizing.canvasWidth - clockWidth) / 2);
-  const dateX = Math.floor((sizing.canvasWidth - dateWidth) / 2);
-  const dateY = startY + clockMetrics.height * sizing.mainPixel + sizing.lineGap;
-
-  drawPixelText(clockText, sizing.mainPixel, clockX, startY, currentForeground);
-  drawPixelText(dateText, sizing.datePixel, dateX, dateY, currentSubForeground);
+  context.clearRect(0, 0, canvasWidth, canvasHeight);
+  drawText(clockText, pixelSize);
 };
 
 const update = () => {
@@ -334,11 +292,13 @@ const update = () => {
   const year = String(now.getFullYear());
 
   clockText = `${hour}:${minute}`;
-  dateText = `${month}-${day}-${year}`;
 
   const minuteOfDay =
     now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
-  applyTheme(resolveTheme(minuteOfDay, now));
+  const theme = resolveTheme(minuteOfDay, now);
+  const dateIso = `${year}-${month}-${day}`;
+
+  applyTheme(theme, dateIso);
   drawClock();
 
   const wait = 1000 - (Date.now() % 1000);
