@@ -15,6 +15,7 @@
     <title>Pixel Clock</title>
   </head>
   <body>
+    <canvas id="sky-layer" aria-hidden="true"></canvas>
     <canvas id="weather-layer" aria-hidden="true"></canvas>
     <main class="app">
       <canvas
@@ -26,22 +27,28 @@
         <p id="period-label" class="period-label" aria-live="off">
           <span id="date-label" class="period-date"></span>
           <span class="period-divider" aria-hidden="true">&middot;</span>
-          <button id="status-button" class="period-button" type="button"></button>
-          <span class="period-divider" aria-hidden="true">&middot;</span>
-          <button id="variant-button" class="period-button" type="button"></button>
-          <span class="period-divider" aria-hidden="true">&middot;</span>
-          <button id="weather-button" class="period-button" type="button"></button>
+          <span id="status-label" class="period-token"></span>
         </p>
+      </div>
+
+      <aside
+        id="settings-shell"
+        class="settings-shell"
+        data-open="false"
+        aria-label="Appearance settings"
+      >
         <button
-          id="theme-lock-button"
-          class="theme-lock"
+          id="settings-toggle"
+          class="settings-toggle"
           type="button"
-          aria-label="Unlock theme automation"
+          aria-label="Open settings"
+          aria-controls="settings-panel"
+          aria-expanded="false"
           aria-pressed="false"
-          title="Unlock theme automation"
+          title="Open settings"
         >
           <svg
-            class="lock-icon lock-icon-locked"
+            class="settings-icon settings-icon-open"
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
             fill="none"
@@ -51,11 +58,15 @@
             stroke-linejoin="round"
             aria-hidden="true"
           >
-            <rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            <line x1="4" x2="20" y1="6" y2="6"></line>
+            <line x1="4" x2="20" y1="12" y2="12"></line>
+            <line x1="4" x2="20" y1="18" y2="18"></line>
+            <circle cx="9" cy="6" r="2"></circle>
+            <circle cx="15" cy="12" r="2"></circle>
+            <circle cx="11" cy="18" r="2"></circle>
           </svg>
           <svg
-            class="lock-icon lock-icon-unlocked"
+            class="settings-icon settings-icon-close"
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
             fill="none"
@@ -65,11 +76,85 @@
             stroke-linejoin="round"
             aria-hidden="true"
           >
-            <rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect>
-            <path d="M7 11V7a5 5 0 0 1 9.5-1"></path>
+            <line x1="18" x2="6" y1="6" y2="18"></line>
+            <line x1="6" x2="18" y1="6" y2="18"></line>
           </svg>
         </button>
-      </div>
+        <div id="settings-panel" class="settings-panel" aria-hidden="true">
+          <div class="settings-row">
+            <span class="settings-key">Variant</span>
+            <button
+              id="variant-button"
+              class="period-button settings-value"
+              type="button"
+            ></button>
+          </div>
+          <div class="settings-row">
+            <span class="settings-key">Weather</span>
+            <button
+              id="weather-button"
+              class="period-button settings-value"
+              type="button"
+            ></button>
+          </div>
+          <div class="settings-row">
+            <span class="settings-key">Lock</span>
+            <div class="settings-lock-group">
+              <button
+                id="theme-lock-button"
+                class="theme-lock"
+                type="button"
+                aria-label="Lock color and weather"
+                aria-pressed="false"
+                title="Lock color and weather"
+              >
+                <svg
+                  class="lock-icon lock-icon-locked"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+                <svg
+                  class="lock-icon lock-icon-unlocked"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 9.5-1"></path>
+                </svg>
+              </button>
+              <span id="lock-state-label" class="lock-state-label" aria-live="off"></span>
+            </div>
+          </div>
+          <div class="settings-row">
+            <span class="settings-key">Effects</span>
+            <button
+              id="cinematic-toggle"
+              class="theme-fx settings-fx"
+              type="button"
+              aria-label="Disable cinematic effects"
+              aria-pressed="true"
+              title="Disable cinematic effects"
+            >
+              FX ON
+            </button>
+          </div>
+        </div>
+      </aside>
     </main>
     <script src="app.js"></script>
   </body>

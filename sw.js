@@ -1,4 +1,4 @@
-const CACHE_NAME = "pixel-clock-v6";
+const CACHE_NAME = "pixel-clock-v7";
 const OFFLINE_URL = "index.html";
 const PRECACHE_URLS = [
   "./",
@@ -47,6 +47,19 @@ async function cacheFirst(request) {
   return networkResponse;
 }
 
+async function networkFirstAsset(request) {
+  try {
+    const networkResponse = await fetch(request);
+    if (networkResponse && networkResponse.ok) {
+      const cache = await caches.open(CACHE_NAME);
+      await cache.put(request, networkResponse.clone());
+    }
+    return networkResponse;
+  } catch {
+    return caches.match(request);
+  }
+}
+
 async function networkFirstNavigation(request) {
   try {
     const networkResponse = await fetch(request);
@@ -73,6 +86,15 @@ self.addEventListener("fetch", (event) => {
 
   if (request.mode === "navigate") {
     event.respondWith(networkFirstNavigation(request));
+    return;
+  }
+
+  if (
+    url.pathname.endsWith("/app.js") ||
+    url.pathname.endsWith("/styles.css") ||
+    url.pathname.endsWith("/index.html")
+  ) {
+    event.respondWith(networkFirstAsset(request));
     return;
   }
 
